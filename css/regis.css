@@ -1,0 +1,151 @@
+/* Modal Styling */
+/* Memastikan hanya elemen di dalam modal yang terpengaruh */
+#registrationModal .modal-body input[type="text"], 
+#registrationModal .modal-body input[type="email"], 
+#registrationModal .modal-body input[type="password"], 
+#registrationModal .modal-body input[type="number"] {
+    width: 100%;
+    padding: 1rem;
+    margin-bottom: 0.1rem;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 1rem;
+    background-color: #f9f9f9;
+    transition: all 0.4s ease;
+}
+
+/* Fokus pada input saat aktif di dalam modal */
+#registrationModal .modal-body input[type="text"]:focus, 
+#registrationModal .modal-body input[type="email"]:focus, 
+#registrationModal .modal-body input[type="password"]:focus, 
+#registrationModal .modal-body input[type="number"]:focus {
+    border-color: #007bff;
+    outline: none;
+    background-color: #fff;
+}
+
+
+.modal-content {
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    background-color: #f9f9f9;
+    padding: 0.4rem;
+}
+
+.modal-header {
+    border-bottom: 1px solid #e2e2e2;
+    background-color: #4facfe;
+    color: #fff;
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+}
+
+.modal-title {
+    font-size: 26px;
+    font-weight: 600;
+}
+
+.btn-close {
+    background-color: transparent;
+    border: none;
+    color: white;
+    font-size: 1.5rem;
+}
+
+/* Form Styling */
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    font-weight: 500;
+    font-size: 16px;
+    color: #333;
+    display: block;
+    margin-bottom: 8px;
+}
+
+.form-control {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 16px;
+    color: #333;
+    box-sizing: border-box;
+    transition: border-color 0.3s ease;
+}
+
+.form-control:focus {
+    border-color: #4facfe;
+    outline: none;
+    box-shadow: 0 0 5px rgba(79, 172, 254, 0.5);
+}
+
+.radio-group {
+    display: flex;
+    justify-content:flex-start;
+    margin-top: 0.3rem;
+}
+
+.radio-group label {
+    font-size: 1rem;
+    color: #333;
+    margin-left: 10px;
+    margin-right: 1.4rem;
+}
+
+.radio-group input[type="radio"] {
+    margin-right:0;
+    margin-left: 0;
+}
+
+/* Submit Button Styling */
+.submit-btn {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    background: linear-gradient(to right, #4facfe, #00f2fe);
+    color: white;
+    font-size: 18px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.submit-btn:hover {
+    background: linear-gradient(to right, #00f2fe, #4facfe);
+}
+
+.submit-btn:active {
+    transform: scale(0.98);
+}
+
+/* Modal Body */
+.modal-body {
+    padding: 20px;
+    background-color: #fff;
+    border-radius: 12px;
+}
+
+/* Responsiveness */
+@media (max-width: 768px) {
+    .modal-dialog {
+        max-width: 90%;
+    }
+
+    .form-group label {
+        font-size: 14px;
+    }
+
+    .form-control {
+        font-size: 14px;
+        padding: 10px;
+    }
+
+    .submit-btn {
+        font-size: 16px;
+        padding: 10px;
+    }
+}
