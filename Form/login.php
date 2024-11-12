@@ -136,7 +136,6 @@
     </div>
     <!--  -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/js/bootstrap.bundle.min.js"></script>
-<<<<<<< HEAD
     <script>
         function showLoading() {
             document.getElementById("loadingOverlay").classList.add("active");
@@ -149,8 +148,6 @@
             
         }
     </script>
-=======
->>>>>>> 4a5140739d57a1d7e871edb314423326492a603a
 </body>
 
 </html>
