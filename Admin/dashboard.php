@@ -1,3 +1,13 @@
+<?php
+session_start(); // Mulai sesi
+// Cek apakah admin sudah login
+if (!isset($_SESSION['user_role']) || $_SESSION['user_role'] !== 'admin') {
+    // Jika belum login atau bukan admin, redirect ke halaman login
+    header("Location: ../Form/login.php");
+    exit();
+}
+$nama_admin = $_SESSION['nama_lengkap'];
+?>
 <!DOCTYPE html>
 <html lang="en">
 
@@ -46,7 +56,7 @@
             </ul>
 
             <ul class="logout-mode">
-                <li><a href="#">
+                <li><a href="../DB/proses_logout.php">
                         <i class="uil uil-signout"></i>
                         <span class="link-name">Logout</span>
                     </a></li>
@@ -68,7 +78,7 @@
     <section class="dashboard">
         <div class="top">
             <i class="uil uil-bars sidebar-toggle"></i>
-            <h2>Admin</h2>
+            <h2><?php echo $nama_admin; ?></h2>
         </div>
 
         <div class="dash-content">
