@@ -1,3 +1,48 @@
+<?php
+require_once "../DB/koneksi.php";
+require_once "../DB/proses_data_pelanggan.php";
+
+
+session_start(); // Mulai sesi
+// Cek apakah admin sudah login
+if (!isset($_SESSION['user_role']) || $_SESSION['user_role'] !== 'admin') {
+    // Jika belum login atau bukan admin, redirect ke halaman login
+    header("Location: ../Form/login.php");
+    exit();
+}
+
+
+
+
+// Query untuk mengambil data
+// Atur jumlah data per halaman
+$data_per_halaman = 10;
+
+// Ambil halaman saat ini dari parameter URL
+$halaman_sekarang = isset($_GET['halaman']) ? (int)$_GET['halaman'] : 1;
+
+// Hitung offset
+$offset = ($halaman_sekarang - 1) * $data_per_halaman;
+
+// Ambil kata kunci pencarian dari parameter URL
+$kata_kunci = isset($_GET['search']) ? $_GET['search'] : "";
+
+// Tambahkan kondisi pencarian jika ada kata kunci
+$kondisi_pencarian = "";
+if (!empty($kata_kunci)) {
+    $kondisi_pencarian = "WHERE nama_lengkap LIKE '%" . $koneksi->real_escape_string($kata_kunci) . "%'";
+}
+
+// Hitung total data untuk pagination (dengan pencarian)
+$sql_total = "SELECT COUNT(*) AS total FROM pelanggan $kondisi_pencarian";
+$result_total = $koneksi->query($sql_total);
+$total_data = $result_total->fetch_assoc()['total'];
+$total_halaman = ceil($total_data / $data_per_halaman);
+
+// Query untuk mengambil data pelanggan dengan pagination dan pencarian
+$sql = "SELECT * FROM pelanggan $kondisi_pencarian LIMIT $data_per_halaman OFFSET $offset";
+$result = $koneksi->query($sql);
+?>
 <!DOCTYPE html>
 <html lang="en">
 
@@ -47,7 +92,7 @@
             </ul>
 
             <ul class="logout-mode">
-                <li><a href="#">
+                <li><a href="../DB/proses_logout.php">
                         <i class="uil uil-signout"></i>
                         <span class="link-name">Logout</span>
                     </a></li>
@@ -76,8 +121,11 @@
             <div class="table-header">
                 <h2>Data Pelanggan</h2>
                 <div class="search-box">
-                    <input type="text" placeholder="Cari pelanggan...">
-                    <i class="fas fa-search"></i>
+                    <form method="get">
+                        <input type="text" name="search" placeholder="Cari Pelanggan..."
+                            value="<?= htmlspecialchars($kata_kunci) ?>">
+                        <button type="submit" style="cursor: pointer;"><i class="fas fa-search"></i></button>
+                    </form>
                 </div>
             </div>
             <div class="table-responsive">
@@ -86,47 +134,104 @@
                         <tr>
                             <th>ID</th>
                             <th>Nama Lengkap</th>
-                            <th>Email</th>
-                            <th>No HP</th>
                             <th>Alamat</th>
                             <th>Kode Pos</th>
+                            <th>Email</th>
+                            <th>No HP</th>
+                            <th>Jenis Kelamin</th>
                             <th>Aksi</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr>
-                            <td>1</td>
-                            <td>Yoga Pratama</td>
-                            <td>yoga@gmail.com</td>
-                            <td>08951234567</td>
-                            <td>Bekasi</td>
-                            <td>12345</td>
-                            <td>
-                                <div class="action-btn">
-                                    <span class="edit-btn"><i class="fas fa-edit"></i> Edit</span>
-                                    <span class="delete-btn"><i class="fas fa-trash"></i> Hapus</span>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>2</td>
-                            <td>Andi Putra</td>
-                            <td>andi@gmail.com</td>
-                            <td>08959876543</td>
-                            <td>Cirebon</td>
-                            <td>67890</td>
-                            <td>
-                                <div class="action-btn">
-                                    <span class="edit-btn"><i class="fas fa-edit"></i> Edit</span>
-                                    <span class="delete-btn"><i class="fas fa-trash"></i> Hapus</span>
-                                </div>
-                            </td>
-                        </tr>
-                        <!-- Tambahkan baris data pelanggan lainnya di sini -->
+                        <?php
+                        if ($result->num_rows > 0) {
+                            while ($row = $result->fetch_assoc()) {
+                                echo "<tr>
+                <td>" . $row["id"] . "</td>
+                <td>" . $row["nama_lengkap"] . "</td>
+                <td>" . $row["email"] . "</td>
+                <td>" . $row["no_hp"] . "</td>
+                <td>" . $row["alamat"] . "</td>
+                <td>" . $row["kode_pos"] . "</td>
+                <td>" . $row["jenis_kelamin"] . "</td>
+                <td>
+                    <div class='action-btn'>
+                        <a href='#' class='edit-btn' onclick=\"openEditModal(" . $row['id'] . ", '" . $row['nama_lengkap'] . "', '" . $row['email'] . "', '" . $row['no_hp'] . "', '" . $row['alamat'] . "', '" . $row['kode_pos'] . "', '" . $row['jenis_kelamin'] . "')\">
+                            <i class='fas fa-edit'></i> Edit
+                        </a>
+                        <a href='?delete_id=" . $row['id'] . "' class='delete-btn' onclick=\"return confirm('Apakah Anda yakin ingin menghapus data ini?')\">
+                            <i class='fas fa-trash'></i> Hapus
+                        </a>
+                    </div>
+                </td>
+            </tr>";
+                            }
+                        } else {
+                            echo "<tr><td colspan='8'>Tidak ada data</td></tr>";
+                        }
+                        ?>
                     </tbody>
                 </table>
+                <div id="editModal" class="modal" style="display: none;">
+                    <div class="modal-content">
+                        <span class="close-btn" onclick="closeEditModal()">&times;</span>
+                        <h2>Edit Data Pelanggan</h2>
+                        <form action="" method="POST">
+                            <input type="hidden" name="update_id" id="edit-id">
+                            <div>
+                                <label>Nama Lengkap:</label>
+                                <input type="text" id="edit-nama" readonly>
+                            </div>
+                            <div>
+                                <label>Email:</label>
+                                <input type="text" id="edit-email" readonly>
+                            </div>
+                            <div>
+                                <label>No HP:</label>
+                                <input type="text" id="edit-nohp" readonly>
+                            </div>
+                            <div>
+                                <label>Alamat:</label>
+                                <input type="text" id="edit-alamat" readonly>
+                            </div>
+                            <div>
+                                <label>Kode Pos:</label>
+                                <input type="text" id="edit-kodepos" readonly>
+                            </div>
+                            <div>
+                                <label>Jenis Kelamin:</label>
+                                <input type="text" id="edit-jenis-kelamin" readonly>
+                            </div>
+                            <div>
+                                <label>Password Baru:</label>
+                                <input type="password" name="password" required>
+                            </div>
+                            <button type="submit">Simpan Perubahan</button>
+                        </form>
+                    </div>
+                </div>
+                <!-- Navigasi Pagination -->
+                <div class="pagination">
+                    <?php if ($halaman_sekarang > 1): ?>
+                        <a href="?halaman=<?= $halaman_sekarang - 1 ?>&search=<?= urlencode($kata_kunci) ?>">&laquo; Sebelumnya</a>
+                    <?php endif; ?>
+
+                    <?php for ($i = 1; $i <= $total_halaman; $i++): ?>
+                        <a href="?halaman=<?= $i ?>&search=<?= urlencode($kata_kunci) ?>"
+                            class="<?= ($i == $halaman_sekarang) ? 'active' : '' ?>">
+                            <?= $i ?>
+                        </a>
+                    <?php endfor; ?>
+
+                    <?php if ($halaman_sekarang < $total_halaman): ?>
+                        <a href="?halaman=<?= $halaman_sekarang + 1 ?>&search=<?= urlencode($kata_kunci) ?>">Berikutnya &raquo;</a>
+                    <?php endif; ?>
+                </div>
             </div>
         </div>
+
+        </div>
+
     </section>
     <script>
         const body = document.querySelector("body"),
@@ -161,7 +266,29 @@
                 localStorage.setItem("status", "open");
             }
         })
+
+        function openEditModal(id, nama, email, nohp, alamat, kodepos, jenisKelamin) {
+            // Set data pada elemen input
+            document.getElementById('edit-id').value = id;
+            document.getElementById('edit-nama').value = nama;
+            document.getElementById('edit-email').value = email;
+            document.getElementById('edit-nohp').value = nohp;
+            document.getElementById('edit-alamat').value = alamat;
+            document.getElementById('edit-kodepos').value = kodepos;
+            document.getElementById('edit-jenis-kelamin').value = jenisKelamin;
+
+            // Tampilkan modal
+            document.getElementById('editModal').style.display = 'block';
+        }
+
+        function closeEditModal() {
+            // Sembunyikan modal
+            document.getElementById('editModal').style.display = 'none';
+        }
     </script>
 </body>
 
 </html>
+<?php
+$koneksi->close();
+?>
