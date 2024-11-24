@@ -157,10 +157,10 @@ $result = $koneksi->query($sql);
                 <td>
                     <div class='action-btn'>
                         <a href='#' class='edit-btn' onclick=\"openEditModal(" . $row['id'] . ", '" . $row['nama_lengkap'] . "', '" . $row['email'] . "', '" . $row['no_hp'] . "', '" . $row['alamat'] . "', '" . $row['kode_pos'] . "', '" . $row['jenis_kelamin'] . "')\">
-                            <i class='fas fa-edit'></i> Edit
+                            <i class='fas fa-edit'></i>
                         </a>
                         <a href='?delete_id=" . $row['id'] . "' class='delete-btn' onclick=\"return confirm('Apakah Anda yakin ingin menghapus data ini?')\">
-                            <i class='fas fa-trash'></i> Hapus
+                            <i class='fas fa-trash'></i>
                         </a>
                     </div>
                 </td>

@@ -1,3 +1,24 @@
+<?php
+require_once "../DB/koneksi.php";
+
+// Pengaturan limit data per halaman
+$data_limit = 10;  // Setiap halaman menampilkan 10 data
+$halaman_sekarang = isset($_GET['halaman']) ? (int)$_GET['halaman'] : 1;  // Mengambil halaman saat ini dari parameter URL
+
+// Hitung offset
+$offset = ($halaman_sekarang - 1) * $data_limit;
+
+// Query untuk menghitung total data transaksi
+$sql_total = "SELECT COUNT(*) AS total FROM transaksi";
+$result_total = $koneksi->query($sql_total);
+$total_data = $result_total->fetch_assoc()['total'];  // Ambil total data transaksi
+$total_halaman = ceil($total_data / $data_limit);  // Hitung jumlah total halaman
+
+// Query untuk mengambil data transaksi dengan limit dan offset
+$sql = "SELECT kode_transaksi, nama_pengiklan, total_harga, status, created_at FROM transaksi ORDER BY created_at DESC LIMIT $data_limit OFFSET $offset";
+$result = $koneksi->query($sql);
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -47,7 +68,7 @@
             </ul>
 
             <ul class="logout-mode">
-                <li><a href="#">
+                <li><a href="../DB/proses_logout.php">
                         <i class="uil uil-signout"></i>
                         <span class="link-name">Logout</span>
                     </a></li>
@@ -73,44 +94,152 @@
         <div class="table-container">
             <br>
             <br>
-        <div class="table-header">
-            <h2>Pengajuan Iklan</h2>
-            <div class="search-box">
-                <input type="text" placeholder="Cari data...">
-                <i class="fas fa-search"></i>
+            <div class="table-header">
+                <h2>Pembayaran</h2>
+                <div class="search-box">
+                    <input type="text" placeholder="Cari data...">
+                    <i class="fas fa-search"></i>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>No</th>
+                            <th>Kode Transaksi</th>
+                            <th>Nama Pengiklan</th>
+                            <th>Biaya</th>
+                            <th>Status</th>
+                            <th>Tanggal Pemesanan</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php
+                        if ($result->num_rows > 0) {
+                            $nomor = 1; // Nomor urut dimulai dari 1
+                            while ($row = $result->fetch_assoc()) {
+                                echo "<tr>
+                    <td>{$nomor}</td>
+                    <td>{$row['kode_transaksi']}</td>
+                    <td>{$row['nama_pengiklan']}</td>
+                    <td>Rp." . number_format($row['total_harga'], 0, ',', '.') . "</td>
+                    <td>{$row['status']}</td>
+                    <td>{$row['created_at']}</td>
+                    <td>
+                    <div class='action-btn'>
+                        <span class='edit-btn' data-id='{$row['kode_transaksi']}' data-status='{$row['status']}'>
+                            <i class='fas fa-check'></i>
+                        </span>
+                        <span class='delete-btn' data-id='{$row['kode_transaksi']}'>
+                            <i class='fas fa-trash'></i>
+                        </span>
+                    </div>
+                </td>
+                 </tr>";
+                                $nomor++;
+                            }
+                        } else {
+                            echo "<tr><td colspan='6'>Tidak ada data</td></tr>";
+                        }
+                        ?>
+                    </tbody>
+                </table>
+                <div class="pagination">
+                    <?php
+                    for ($i = 1; $i <= $total_halaman; $i++) {
+                        $active = ($i === $halaman_sekarang) ? 'class="active"' : '';
+                        echo "<a href='?halaman=$i' $active>$i</a>";
+                    }
+                    ?>
+                </div>
             </div>
         </div>
-        <div class="table-responsive">
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Nama Pengguna</th>
-                        <th>Biaya</th>
-                        <th>Status</th>
-                        <th>Tanggal Pembayaran</th>
-                        <th>Aksi</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>1</td>
-                        <td>Yoga</td>
-                        <td>Rp.100000</td>
-                        <td>Sukses</td>
-                        <td>11-11-2024</td>
-                        <td>
-                            <div class="action-btn">
-                                <span class="edit-btn"><i class="fas fa-edit"></i> Edit</span>
-                                <span class="delete-btn"><i class="fas fa-trash"></i> Hapus</span>
-                            </div>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
     </section>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            // Logika untuk tombol centang
+            document.querySelectorAll(".edit-btn").forEach(btn => {
+                btn.addEventListener("click", function() {
+                    const id = this.getAttribute("data-id");
+                    const status = this.getAttribute("data-status");
+
+                    if (status === "Sukses") {
+                        Swal.fire("Info", "Transaksi sudah berstatus sukses.", "info");
+                        return;
+                    }
+
+                    Swal.fire({
+                        title: "Apakah transaksi ini sudah dibayarkan?",
+                        icon: "question",
+                        showCancelButton: true,
+                        confirmButtonText: "Ya, ubah status",
+                        cancelButtonText: "Batal"
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            fetch("../DB/aksi_tombol_transaksi.php", {
+                                    method: "POST",
+                                    headers: {
+                                        "Content-Type": "application/x-www-form-urlencoded"
+                                    },
+                                    body: `id=${id}&aksi=ubah_status`
+                                })
+                                .then(response => {
+                                    if (!response.ok) {
+                                        throw new Error("Gagal memperbarui status.");
+                                    }
+                                    return response.text();
+                                })
+                                .then(data => {
+                                    Swal.fire("Sukses", data, "success");
+                                    setTimeout(() => location.reload(), 1500);
+                                })
+                                .catch(error => Swal.fire("Error", error.message, "error"));
+                        }
+                    });
+                });
+            });
+
+            // Logika untuk tombol hapus
+            document.querySelectorAll(".delete-btn").forEach(btn => {
+                btn.addEventListener("click", function() {
+                    const id = this.getAttribute("data-id");
+
+                    Swal.fire({
+                        title: "Apakah Anda yakin?",
+                        text: "Data yang dihapus tidak dapat dikembalikan!",
+                        icon: "warning",
+                        showCancelButton: true,
+                        confirmButtonText: "Ya, hapus!",
+                        cancelButtonText: "Batal"
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            fetch("../DB/aksi_tombol_transaksi.php", {
+                                    method: "POST",
+                                    headers: {
+                                        "Content-Type": "application/x-www-form-urlencoded"
+                                    },
+                                    body: `id=${id}&aksi=hapus`
+                                })
+                                .then(response => {
+                                    if (!response.ok) {
+                                        throw new Error("Gagal menghapus data.");
+                                    }
+                                    return response.text();
+                                })
+                                .then(data => {
+                                    Swal.fire("Sukses", data, "success");
+                                    setTimeout(() => location.reload(), 1500);
+                                })
+                                .catch(error => Swal.fire("Error", error.message, "error"));
+                        }
+                    });
+                });
+            });
+        });
+    </script>
+
     <script>
         const body = document.querySelector("body"),
             modeToggle = body.querySelector(".mode-toggle");

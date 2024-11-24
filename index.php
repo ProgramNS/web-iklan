@@ -39,10 +39,13 @@ if ($isLoggedIn) {
                 <ul class="nav-links">
                     <li><a href="#home" class="active">Beranda</a></li>
                     <li><a href="#ads">Jenis Iklan</a></li>
-                    <li><a href="#order" id="order-link">Pemesanan Iklan</a></li>
+                    <li><a href="Form/pembayaran.php" id="order-link">Pemesanan Iklan</a></li>
                     <li><a href="#contact">Kontak</a></li>
                 </ul>
-                <a href="#order" id="order-link" class="btn-primary">Pesan Sekarang</a>
+                <a href="Form/pembayaran.php" id="order-link" class="btn-primary">Pesan Sekarang</a>
+                <?php if ($isLoggedIn): ?>
+                    <a href="DB/proses_logout.php" class="btn-secondary logout-btn">Logout</a>
+                <?php endif; ?>
             </nav>
         </div>
     </header>
@@ -157,7 +160,7 @@ if ($isLoggedIn) {
                     loginModal.style.display = 'flex';
                 } else {
                     // Redirect ke halaman pemesanan jika sudah login
-                    window.location.href = '#order';
+                    window.location.href = 'Form/pembayaran.php';
                 }
             });
         });

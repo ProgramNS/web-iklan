@@ -1,13 +1,35 @@
 <?php
+include '../DB/koneksi.php';
 session_start(); // Mulai sesi
+
 // Cek apakah admin sudah login
 if (!isset($_SESSION['user_role']) || $_SESSION['user_role'] !== 'admin') {
     // Jika belum login atau bukan admin, redirect ke halaman login
     header("Location: ../Form/login.php");
     exit();
 }
+
+// Query untuk menghitung total pelanggan berdasarkan jumlah id_pelanggan
+$query_pelanggan = "SELECT COUNT(id) AS total_pelanggan FROM pelanggan";
+$result_pelanggan = mysqli_query($koneksi, $query_pelanggan);
+$row_pelanggan = mysqli_fetch_assoc($result_pelanggan);
+$total_pelanggan = $row_pelanggan['total_pelanggan'];
+
+// Query untuk menghitung total data iklan berdasarkan jumlah id_iklan
+$query_iklan = "SELECT COUNT(id) AS total_iklan FROM data_iklan";
+$result_iklan = mysqli_query($koneksi, $query_iklan);
+$row_iklan = mysqli_fetch_assoc($result_iklan);
+$total_iklan = $row_iklan['total_iklan'];
+
+// Query untuk menghitung total pendapatan berdasarkan jumlah id_transaksi
+$query_pendapatan = "SELECT SUM(total_harga) AS total_pendapatan FROM transaksi";
+$result_pendapatan = mysqli_query($koneksi, $query_pendapatan);
+$row_pendapatan = mysqli_fetch_assoc($result_pendapatan);
+$total_pendapatan = $row_pendapatan['total_pendapatan'];
+
 $nama_admin = $_SESSION['nama_lengkap'];
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -92,77 +114,17 @@ $nama_admin = $_SESSION['nama_lengkap'];
                     <div class="box box1">
                         <i class="uil uil-user-circle"></i>
                         <span class="text">Total Pelanggan</span>
-                        <span class="number">50,120</span>
+                        <span class="number"><?php echo number_format($total_pelanggan); ?></span>
                     </div>
                     <div class="box box2">
                         <i class="uil uil-analysis"></i>
                         <span class="text">Total Data Iklan</span>
-                        <span class="number">20,120</span>
+                        <span class="number"><?php echo number_format($total_iklan); ?></span>
                     </div>
                     <div class="box box3">
                         <i class="uil uil-money-insert"></i>
                         <span class="text">Total Pendapatan</span>
-                        <span class="number">10,120</span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="activity">
-                <div class="title">
-                    <i class="uil uil-clock-three"></i>
-                    <span class="text">Recent Activity</span>
-                </div>
-
-                <div class="activity-data">
-                    <div class="data names">
-                        <span class="data-title">Name</span>
-                        <span class="data-list">Prem Shahi</span>
-                        <span class="data-list">Deepa Chand</span>
-                        <span class="data-list">Manisha Chand</span>
-                        <span class="data-list">Pratima Shahi</span>
-                        <span class="data-list">Man Shahi</span>
-                        <span class="data-list">Ganesh Chand</span>
-                        <span class="data-list">Bikash Chand</span>
-                    </div>
-                    <div class="data email">
-                        <span class="data-title">Email</span>
-                        <span class="data-list">premshahi@gmail.com</span>
-                        <span class="data-list">deepachand@gmail.com</span>
-                        <span class="data-list">prakashhai@gmail.com</span>
-                        <span class="data-list">manishachand@gmail.com</span>
-                        <span class="data-list">pratimashhai@gmail.com</span>
-                        <span class="data-list">manshahi@gmail.com</span>
-                        <span class="data-list">ganeshchand@gmail.com</span>
-                    </div>
-                    <div class="data joined">
-                        <span class="data-title">Joined</span>
-                        <span class="data-list">2022-02-12</span>
-                        <span class="data-list">2022-02-12</span>
-                        <span class="data-list">2022-02-13</span>
-                        <span class="data-list">2022-02-13</span>
-                        <span class="data-list">2022-02-14</span>
-                        <span class="data-list">2022-02-14</span>
-                        <span class="data-list">2022-02-15</span>
-                    </div>
-                    <div class="data type">
-                        <span class="data-title">Type</span>
-                        <span class="data-list">New</span>
-                        <span class="data-list">Member</span>
-                        <span class="data-list">Member</span>
-                        <span class="data-list">New</span>
-                        <span class="data-list">Member</span>
-                        <span class="data-list">New</span>
-                        <span class="data-list">Member</span>
-                    </div>
-                    <div class="data status">
-                        <span class="data-title">Status</span>
-                        <span class="data-list">Liked</span>
-                        <span class="data-list">Liked</span>
-                        <span class="data-list">Liked</span>
-                        <span class="data-list">Liked</span>
-                        <span class="data-list">Liked</span>
-                        <span class="data-list">Liked</span>
-                        <span class="data-list">Liked</span>
+                        <span class="number">Rp. <?php echo number_format($total_pendapatan); ?></span>
                     </div>
                 </div>
             </div>
