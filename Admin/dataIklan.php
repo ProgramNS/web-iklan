@@ -126,22 +126,22 @@ $result = $koneksi->query($sql);
                         if ($result->num_rows > 0) {
                             $nomor = ($halaman_sekarang - 1) * $data_limit + 1; // Mulai nomor dari 1 pada setiap halaman
                             while ($row = $result->fetch_assoc()) {
-                                echo " <tr>
-                    <td>{$nomor}</td>
-                    <td>{$row['nama_pengiklan']}</td>
-                    <td>{$row['judul_iklan']}</td>
-                    <td>{$row['jenis_iklan']}</td>
-                    <td>{$row['lama_durasi']} detik</td>
-                    <td>{$row['tanggal_penayangan']}</td>
-                    <td>{$row['status_iklan']}</td>
-                    <td>
-                    <div class='action-btn'>
-                        <button class='edit-btn' style='border:none;' ><i class='fas fa-check'></i></button>
-                        <button class='delete-btn'style='border:none;'><i class='fas fa-trash'></i></button>
-                    </div>
-                    </td>
-                 </tr>";
-                                $nomor++; // Increment nomor untuk baris berikutnya
+                                echo "<tr data-id='{$row['id']}'> 
+                                    <td>{$nomor}</td> 
+                                    <td>{$row['nama_pengiklan']}</td>
+                                    <td>{$row['judul_iklan']}</td>
+                                    <td>{$row['jenis_iklan']}</td>
+                                    <td>{$row['lama_durasi']} detik</td>
+                                    <td>{$row['tanggal_penayangan']}</td>
+                                    <td>{$row['status_iklan']}</td>
+                                    <td>
+                                        <div class='action-btn'>
+                                            <button class='edit-btn' style='border:none;'><i class='fas fa-check'></i></button>
+                                            <button class='delete-btn' style='border:none;'><i class='fas fa-trash'></i></button>
+                                        </div>
+                                    </td>
+                                </tr>";
+                                $nomor++;
                             }
                         } else {
                             echo "<tr><td colspan='8'>Tidak ada data</td></tr>";
@@ -200,8 +200,8 @@ $result = $koneksi->query($sql);
             document.querySelectorAll(".edit-btn").forEach(btn => {
                 btn.addEventListener("click", function() {
                     const row = this.closest("tr"); // Baris tabel
-                    const id = row.querySelector("td:first-child").innerText; // ID data
-                    const status = row.querySelector("td:nth-child(6)").innerText; // Status kolom
+                    const id = row.dataset.id; // ID data
+                    const status = row.querySelector("td:nth-child(7)").innerText; // Status kolom
 
                     // Jika status sudah 'Diterima', tampilkan notifikasi
                     if (status.trim() === "Diterima") {
@@ -213,7 +213,7 @@ $result = $koneksi->query($sql);
                         });
                         return;
                     }
-
+                    
                     // Jika status belum 'Diterima', tampilkan konfirmasi perubahan
                     Swal.fire({
                         title: "Apakah Anda yakin?",
