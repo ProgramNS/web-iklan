@@ -2,22 +2,23 @@
 require_once "../DB/koneksi.php";
 
 // Query Pengambilan Data
-
 $data_limit = 10;
-$data_diambil = "";
+$search = isset($_GET['search']) ? $_GET['search'] : '';
 $halaman_sekarang = isset($_GET['halaman']) ? (int)$_GET['halaman'] : 1;
 
-// Ambil halaman saat ini dari parameter URL
+// Filter pencarian
+$data_diambil = !empty($search) ? "WHERE nama_pengiklan LIKE '%$search%' OR judul_iklan LIKE '%$search%' OR jenis_iklan LIKE '%$search%'" : "";
 
 // Hitung offset
 $offset = ($halaman_sekarang - 1) * $data_limit;
 
 // Hitung total data untuk pagination
-$sql_total = "SELECT COUNT(*) AS  total FROM data_iklan $data_diambil";
+$sql_total = "SELECT COUNT(*) AS total FROM data_iklan $data_diambil";
 $result_total = $koneksi->query($sql_total);
 $total_data = $result_total->fetch_assoc()['total'];
 $total_halaman = ceil($total_data / $data_limit);
 
+// Ambil data berdasarkan filter pencarian dan pagination
 $sql = "SELECT * FROM data_iklan $data_diambil LIMIT $data_limit OFFSET $offset";
 $result = $koneksi->query($sql);
 ?>
@@ -95,13 +96,15 @@ $result = $koneksi->query($sql);
             <i class="uil uil-bars sidebar-toggle"></i>
         </div>
         <div class="table-container">
-            <br>
-            <br>
+            <br><br>
             <div class="table-header">
                 <h2>Pengajuan Iklan</h2>
                 <div class="search-box">
-                    <input type="text" placeholder="Cari data...">
-                    <i class="fas fa-search"></i>
+                    <!-- Form pencarian -->
+                    <form method="GET" action="">
+                        <input type="text" name="search" placeholder="Cari data..." value="<?= htmlspecialchars($search) ?>">
+                        <button type="submit"><i class="fas fa-search"></i></button>
+                    </form>
                 </div>
             </div>
             <div class="table-responsive">
@@ -111,6 +114,7 @@ $result = $koneksi->query($sql);
                             <th>No</th>
                             <th>Nama Pengiklan</th>
                             <th>Judul Iklan</th>
+                            <th>Jenis Iklan</th>
                             <th>Lama Durasi</th>
                             <th>Tanggal Penayangan</th>
                             <th>Status</th>
@@ -126,7 +130,8 @@ $result = $koneksi->query($sql);
                     <td>{$nomor}</td>
                     <td>{$row['nama_pengiklan']}</td>
                     <td>{$row['judul_iklan']}</td>
-                    <td>{$row['lama_durasi']} menit</td>
+                    <td>{$row['jenis_iklan']}</td>
+                    <td>{$row['lama_durasi']} detik</td>
                     <td>{$row['tanggal_penayangan']}</td>
                     <td>{$row['status_iklan']}</td>
                     <td>
@@ -148,7 +153,7 @@ $result = $koneksi->query($sql);
                     <?php
                     for ($i = 1; $i <= $total_halaman; $i++) {
                         $active = ($i === $halaman_sekarang) ? 'class="active"' : '';
-                        echo "<a href='?halaman=$i' $active>$i</a>";
+                        echo "<a href='?halaman=$i&search=$search' $active>$i</a>";
                     }
                     ?>
                 </div>
@@ -190,89 +195,89 @@ $result = $koneksi->query($sql);
             }
         })
 
-        document.addEventListener("DOMContentLoaded", function () {
-        // Tombol untuk mengubah status menjadi 'Diterima'
-        document.querySelectorAll(".edit-btn").forEach(btn => {
-            btn.addEventListener("click", function () {
-                const row = this.closest("tr"); // Baris tabel
-                const id = row.querySelector("td:first-child").innerText; // ID data
-                const status = row.querySelector("td:nth-child(6)").innerText; // Status kolom
+        document.addEventListener("DOMContentLoaded", function() {
+            // Tombol untuk mengubah status menjadi 'Diterima'
+            document.querySelectorAll(".edit-btn").forEach(btn => {
+                btn.addEventListener("click", function() {
+                    const row = this.closest("tr"); // Baris tabel
+                    const id = row.querySelector("td:first-child").innerText; // ID data
+                    const status = row.querySelector("td:nth-child(6)").innerText; // Status kolom
 
-                // Jika status sudah 'Diterima', tampilkan notifikasi
-                if (status.trim() === "Diterima") {
+                    // Jika status sudah 'Diterima', tampilkan notifikasi
+                    if (status.trim() === "Diterima") {
+                        Swal.fire({
+                            title: "Info",
+                            text: "Data ini sudah berstatus 'Diterima'.",
+                            icon: "info",
+                            confirmButtonText: "OK",
+                        });
+                        return;
+                    }
+
+                    // Jika status belum 'Diterima', tampilkan konfirmasi perubahan
                     Swal.fire({
-                        title: "Info",
-                        text: "Data ini sudah berstatus 'Diterima'.",
-                        icon: "info",
-                        confirmButtonText: "OK",
+                        title: "Apakah Anda yakin?",
+                        text: "Status iklan akan diubah menjadi 'Diterima'.",
+                        icon: "question",
+                        showCancelButton: true,
+                        confirmButtonText: "Ya, ubah status",
+                        cancelButtonText: "Batal",
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            fetch("../DB/aksi_tombol.php", {
+                                    method: "POST",
+                                    headers: {
+                                        "Content-Type": "application/x-www-form-urlencoded",
+                                    },
+                                    body: `id=${id}&aksi=ubah_status`,
+                                })
+                                .then(response => response.text())
+                                .then(result => {
+                                    Swal.fire("Sukses", result, "success");
+                                    setTimeout(() => location.reload(), 1500);
+                                })
+                                .catch(error => {
+                                    Swal.fire("Error", "Terjadi kesalahan saat memproses permintaan.", "error");
+                                });
+                        }
                     });
-                    return;
-                }
+                });
+            });
 
-                // Jika status belum 'Diterima', tampilkan konfirmasi perubahan
-                Swal.fire({
-                    title: "Apakah Anda yakin?",
-                    text: "Status iklan akan diubah menjadi 'Diterima'.",
-                    icon: "question",
-                    showCancelButton: true,
-                    confirmButtonText: "Ya, ubah status",
-                    cancelButtonText: "Batal",
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        fetch("../DB/aksi_tombol.php", {
-                            method: "POST",
-                            headers: {
-                                "Content-Type": "application/x-www-form-urlencoded",
-                            },
-                            body: `id=${id}&aksi=ubah_status`,
-                        })
-                            .then(response => response.text())
-                            .then(result => {
-                                Swal.fire("Sukses", result, "success");
-                                setTimeout(() => location.reload(), 1500);
-                            })
-                            .catch(error => {
-                                Swal.fire("Error", "Terjadi kesalahan saat memproses permintaan.", "error");
-                            });
-                    }
+            // Tombol untuk menghapus data
+            document.querySelectorAll(".delete-btn").forEach(btn => {
+                btn.addEventListener("click", function() {
+                    const id = this.closest("tr").querySelector("td:first-child").innerText;
+
+                    Swal.fire({
+                        title: "Apakah Anda yakin?",
+                        text: "Data yang dihapus tidak dapat dikembalikan!",
+                        icon: "warning",
+                        showCancelButton: true,
+                        confirmButtonText: "Ya, hapus",
+                        cancelButtonText: "Batal",
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            fetch("../DB/aksi_tombol.php", {
+                                    method: "POST",
+                                    headers: {
+                                        "Content-Type": "application/x-www-form-urlencoded",
+                                    },
+                                    body: `id=${id}&aksi=hapus`,
+                                })
+                                .then(response => response.text())
+                                .then(result => {
+                                    Swal.fire("Sukses", result, "success");
+                                    setTimeout(() => location.reload(), 1500);
+                                })
+                                .catch(error => {
+                                    Swal.fire("Error", "Terjadi kesalahan saat memproses permintaan.", "error");
+                                });
+                        }
+                    });
                 });
             });
         });
-
-        // Tombol untuk menghapus data
-        document.querySelectorAll(".delete-btn").forEach(btn => {
-            btn.addEventListener("click", function () {
-                const id = this.closest("tr").querySelector("td:first-child").innerText;
-
-                Swal.fire({
-                    title: "Apakah Anda yakin?",
-                    text: "Data yang dihapus tidak dapat dikembalikan!",
-                    icon: "warning",
-                    showCancelButton: true,
-                    confirmButtonText: "Ya, hapus",
-                    cancelButtonText: "Batal",
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        fetch("../DB/aksi_tombol.php", {
-                            method: "POST",
-                            headers: {
-                                "Content-Type": "application/x-www-form-urlencoded",
-                            },
-                            body: `id=${id}&aksi=hapus`,
-                        })
-                            .then(response => response.text())
-                            .then(result => {
-                                Swal.fire("Sukses", result, "success");
-                                setTimeout(() => location.reload(), 1500);
-                            })
-                            .catch(error => {
-                                Swal.fire("Error", "Terjadi kesalahan saat memproses permintaan.", "error");
-                            });
-                    }
-                });
-            });
-        });
-    });
     </script>
 </body>
 

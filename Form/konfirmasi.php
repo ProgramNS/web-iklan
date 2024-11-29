@@ -16,7 +16,7 @@
       </div>
       <div class="note">
         <p>Harap simpan kode diatas untuk diberikan ke admin setelah melakukan pembayaran.</p>
-        <p>Nomor admin: <b>+62 882-1646-4302</b></p>
+        <a href="https://wa.me/6288216464302">Nomor admin: <b>+62 882-1646-4302</b></a>
       </div>
       <div class="home-link">
         <a href="../index.php">Kembali ke Beranda</a>

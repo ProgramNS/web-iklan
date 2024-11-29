@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Form Pemesanan Pasang Iklan</title>
   <link rel="stylesheet" href="../css/pembayaran.css">
 </head>
+
 <body>
   <div class="form-container">
     <h1>Pemesanan Pasang Iklan</h1>
@@ -48,7 +50,12 @@
       <!-- Metode Pembayaran -->
       <div class="form-group">
         <label for="metodePembayaran">Metode Pembayaran</label>
-        <input type="text" id="metodePembayaran" value="Transfer Bank ke Bank BCA (275022545)" disabled>
+        <select id="metodePembayaran" name="metodePembayaran" required>
+          <option value="">Pilih Metode Pembayaran</option>
+          <option value="bca">BCA (275022545)</option>
+          <option value="gopay">Gopay (088216464302)</option>
+          <option value="dana">Dana (088216464302)</option>
+        </select>
       </div>
 
       <!-- Total Harga + PPN -->
@@ -82,7 +89,7 @@
         const ppn = harga * 0.11;
         const totalHarga = harga + ppn;
 
-        totalHargaField.value = `Rp ${totalHarga.toLocaleString('id-ID')}`;
+        totalHargaField.value = `Rp ${totalHarga}`;
       } else {
         alert("Durasi iklan harus antara 1 hingga 180 detik!");
       }
@@ -103,13 +110,20 @@
           const lamaDurasi = document.getElementById('lamaDurasi').value;
           const namaPengiklan = document.getElementById('namaPengiklan').value;
           const tanggalPenayangan = document.getElementById('tanggalPenayangan').value;
+          const metodePembayaran = document.getElementById('metodePembayaran').options[document.getElementById('metodePembayaran').selectedIndex].text;
           const totalHarga = document.getElementById('totalHarga').value;
           const statusPembayaran = 'Pending';
 
-          if (!jenisIklan || !judulIklan || !lamaDurasi || !namaPengiklan || !tanggalPenayangan || !totalHarga) {
+          if (!jenisIklan || !judulIklan || !lamaDurasi || !namaPengiklan || !tanggalPenayangan || !metodePembayaran || !totalHarga) {
             Swal.fire('Error', 'Harap lengkapi semua data sebelum memesan iklan!', 'error');
             return;
           }
+
+          // Mengambil nilai totalHarga tanpa simbol Rp dan format mata uang lainnya
+          const totalHargaNumeric = parseFloat(totalHarga.replace(/[^\d.-]/g, ''));
+
+          // Format untuk memastikan dua angka desimal
+          const formattedTotalHarga = totalHargaNumeric.toFixed(2); // Format angka ke dua desimal
 
           const kodeTransaksi = generateRandomCode(10);
 
@@ -121,27 +135,30 @@
             lama_durasi: parseInt(lamaDurasi),
             nama_pengiklan: namaPengiklan,
             tanggal_penayangan: tanggalPenayangan,
-            total_harga: parseFloat(totalHarga.replace(/[^\d.-]/g, '')),
+            metode_pembayaran: metodePembayaran,
+            total_harga: formattedTotalHarga, // Kirimkan nilai totalHarga dengan dua desimal
             status: statusPembayaran
           };
 
           fetch('../DB/simpan_transaksi.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(dataTransaksi)
-          })
-          .then(response => response.json())
-          .then(result => {
-            if (result.success) {
-              Swal.fire('Berhasil', 'Transaksi berhasil disimpan!', 'success').then(() => {
-                localStorage.setItem('kodeTransaksi', kodeTransaksi);
-                window.location.href = '../Form/konfirmasi.php';
-              });
-            } else {
-              Swal.fire('Gagal', 'Gagal menyimpan transaksi: ' + result.message, 'error');
-            }
-          })
-          .catch(error => console.error('Error:', error));
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify(dataTransaksi)
+            })
+            .then(response => response.json())
+            .then(result => {
+              if (result.success) {
+                Swal.fire('Berhasil', 'Transaksi berhasil disimpan!', 'success').then(() => {
+                  localStorage.setItem('kodeTransaksi', kodeTransaksi);
+                  window.location.href = '../Form/konfirmasi.php';
+                });
+              } else {
+                Swal.fire('Gagal', 'Gagal menyimpan transaksi: ' + result.message, 'error');
+              }
+            })
+            .catch(error => console.error('Error:', error));
         }
       });
     }
@@ -156,4 +173,5 @@
     }
   </script>
 </body>
+
 </html>

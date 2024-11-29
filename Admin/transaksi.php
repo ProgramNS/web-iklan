@@ -2,20 +2,28 @@
 require_once "../DB/koneksi.php";
 
 // Pengaturan limit data per halaman
-$data_limit = 10;  // Setiap halaman menampilkan 10 data
-$halaman_sekarang = isset($_GET['halaman']) ? (int)$_GET['halaman'] : 1;  // Mengambil halaman saat ini dari parameter URL
+$data_limit = 10; // Setiap halaman menampilkan 10 data
+$halaman_sekarang = isset($_GET['halaman']) ? (int)$_GET['halaman'] : 1; // Halaman saat ini
+$offset = ($halaman_sekarang - 1) * $data_limit; // Hitung offset
 
-// Hitung offset
-$offset = ($halaman_sekarang - 1) * $data_limit;
+// Ambil parameter pencarian
+$search = isset($_GET['search']) ? $koneksi->real_escape_string($_GET['search']) : '';
 
-// Query untuk menghitung total data transaksi
-$sql_total = "SELECT COUNT(*) AS total FROM transaksi";
+// Filter pencarian
+$search_condition = $search ? "WHERE kode_transaksi LIKE '%$search%'" : '';
+
+// Hitung total data transaksi dengan filter
+$sql_total = "SELECT COUNT(*) AS total FROM transaksi $search_condition";
 $result_total = $koneksi->query($sql_total);
-$total_data = $result_total->fetch_assoc()['total'];  // Ambil total data transaksi
-$total_halaman = ceil($total_data / $data_limit);  // Hitung jumlah total halaman
+$total_data = $result_total->fetch_assoc()['total']; // Total data berdasarkan filter
+$total_halaman = ceil($total_data / $data_limit); // Total halaman
 
-// Query untuk mengambil data transaksi dengan limit dan offset
-$sql = "SELECT kode_transaksi, nama_pengiklan, total_harga, status, created_at FROM transaksi ORDER BY created_at DESC LIMIT $data_limit OFFSET $offset";
+// Query untuk mengambil data transaksi berdasarkan filter dan pagination
+$sql = "SELECT kode_transaksi, nama_pengiklan, total_harga, metode_pembayaran, status, created_at 
+        FROM transaksi 
+        $search_condition 
+        ORDER BY created_at DESC 
+        LIMIT $data_limit OFFSET $offset";
 $result = $koneksi->query($sql);
 ?>
 
@@ -34,7 +42,7 @@ $result = $koneksi->query($sql);
     <!----===== Iconscout CSS ===== -->
     <link rel="stylesheet" href="https://unicons.iconscout.com/release/v4.0.0/css/line.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <title>Data Iklan</title>
+    <title>Data Transaksi</title>
 </head>
 
 <body>
@@ -43,15 +51,13 @@ $result = $koneksi->query($sql);
             <div class="logo-image">
                 <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/6/69/MNCTV_logo.png/798px-MNCTV_logo.png?20180109104219" alt="">
             </div>
-
             <span class="logo_name">Vision Panel</span>
         </div>
-
         <div class="menu-items">
             <ul class="nav-links">
                 <li><a href="dashboard.php">
                         <i class="uil uil-estate"></i>
-                        <span class="link-name">Dahsboard</span>
+                        <span class="link-name">Dashboard</span>
                     </a></li>
                 <li><a href="dataIklan.php">
                         <i class="uil uil-files-landscapes"></i>
@@ -66,19 +72,16 @@ $result = $koneksi->query($sql);
                         <span class="link-name">Pengguna</span>
                     </a></li>
             </ul>
-
             <ul class="logout-mode">
                 <li><a href="../DB/proses_logout.php">
                         <i class="uil uil-signout"></i>
                         <span class="link-name">Logout</span>
                     </a></li>
-
                 <li class="mode">
                     <a href="#">
                         <i class="uil uil-moon"></i>
                         <span class="link-name">Dark Mode</span>
                     </a>
-
                     <div class="mode-toggle">
                         <span class="switch"></span>
                     </div>
@@ -92,13 +95,16 @@ $result = $koneksi->query($sql);
             <i class="uil uil-bars sidebar-toggle"></i>
         </div>
         <div class="table-container">
-            <br>
-            <br>
+            <br><br>
             <div class="table-header">
                 <h2>Pembayaran</h2>
                 <div class="search-box">
-                    <input type="text" placeholder="Cari data...">
-                    <i class="fas fa-search"></i>
+                    <form method="GET" action="">
+                        <input type="text" name="search" placeholder="Cari kode transaksi..." value="<?= htmlspecialchars($search) ?>">
+                        <button type="submit">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </form>
                 </div>
             </div>
             <div class="table-responsive">
@@ -109,6 +115,7 @@ $result = $koneksi->query($sql);
                             <th>Kode Transaksi</th>
                             <th>Nama Pengiklan</th>
                             <th>Biaya</th>
+                            <th>Metode Pembayaran</th>
                             <th>Status</th>
                             <th>Tanggal Pemesanan</th>
                             <th>Aksi</th>
@@ -117,30 +124,31 @@ $result = $koneksi->query($sql);
                     <tbody>
                         <?php
                         if ($result->num_rows > 0) {
-                            $nomor = 1; // Nomor urut dimulai dari 1
+                            $nomor = $offset + 1; // Nomor urut dimulai dari offset
                             while ($row = $result->fetch_assoc()) {
                                 echo "<tr>
-                    <td>{$nomor}</td>
-                    <td>{$row['kode_transaksi']}</td>
-                    <td>{$row['nama_pengiklan']}</td>
-                    <td>Rp." . number_format($row['total_harga'], 0, ',', '.') . "</td>
-                    <td>{$row['status']}</td>
-                    <td>{$row['created_at']}</td>
-                    <td>
-                    <div class='action-btn'>
-                        <span class='edit-btn' data-id='{$row['kode_transaksi']}' data-status='{$row['status']}'>
-                            <i class='fas fa-check'></i>
-                        </span>
-                        <span class='delete-btn' data-id='{$row['kode_transaksi']}'>
-                            <i class='fas fa-trash'></i>
-                        </span>
-                    </div>
-                </td>
-                 </tr>";
+                                    <td>{$nomor}</td>
+                                    <td>{$row['kode_transaksi']}</td>
+                                    <td>{$row['nama_pengiklan']}</td>
+                                    <td>Rp." . number_format($row['total_harga'], 0, ',', '.') . "</td>
+                                    <td>{$row['metode_pembayaran']}</td>
+                                    <td>{$row['status']}</td>
+                                    <td>{$row['created_at']}</td>
+                                    <td>
+                                        <div class='action-btn'>
+                                            <span class='edit-btn' data-id='{$row['kode_transaksi']}' data-status='{$row['status']}'>
+                                                <i class='fas fa-check'></i>
+                                            </span>
+                                            <span class='delete-btn' data-id='{$row['kode_transaksi']}'>
+                                                <i class='fas fa-trash'></i>
+                                            </span>
+                                        </div>
+                                    </td>
+                                </tr>";
                                 $nomor++;
                             }
                         } else {
-                            echo "<tr><td colspan='6'>Tidak ada data</td></tr>";
+                            echo "<tr><td colspan='8'>Data tidak ditemukan</td></tr>";
                         }
                         ?>
                     </tbody>
@@ -149,7 +157,8 @@ $result = $koneksi->query($sql);
                     <?php
                     for ($i = 1; $i <= $total_halaman; $i++) {
                         $active = ($i === $halaman_sekarang) ? 'class="active"' : '';
-                        echo "<a href='?halaman=$i' $active>$i</a>";
+                        $search_param = $search ? "&search=" . urlencode($search) : ''; // Tambahkan parameter pencarian
+                        echo "<a href='?halaman=$i$search_param' $active>$i</a>";
                     }
                     ?>
                 </div>
@@ -275,5 +284,4 @@ $result = $koneksi->query($sql);
         })
     </script>
 </body>
-
 </html>
